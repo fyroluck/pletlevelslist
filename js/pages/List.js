@@ -22,8 +22,8 @@ export default {
         </main>
         <main v-else class="page-list">
             <div class="list-container">
-                <table class="list" v-if="list">
-                    <tr v-for="([level, err], i) in list">
+                <table class="list" v-if="list && list.length">
+                    <tr v-for="([level, err], i) in list" :key="i">
                         <td class="rank">
                             <p v-if="i + 1 <= 150" class="type-label-lg">#{{ i + 1 }}</p>
                             <p v-else class="type-label-lg">Legacy</p>
@@ -60,7 +60,7 @@ export default {
                     <p v-else-if="selected + 1 <= 150"><strong>100%</strong> or better to qualify</p>
                     <p v-else>This level does not accept new records.</p>
                     <table class="records">
-                        <tr v-for="record in level.records" class="record">
+                        <tr v-for="(record, r) in level.records" :key="r" class="record">
                             <td class="percent">
                                 <p>{{ record.percent }}%</p>
                             </td>
@@ -83,7 +83,7 @@ export default {
             <div class="meta-container">
                 <div class="meta">
                     <div class="errors" v-show="errors.length > 0">
-                        <p class="error" v-for="error of errors">{{ error }}</p>
+                        <p class="error" v-for="(error, e) in errors" :key="e">{{ error }}</p>
                     </div>
                     <div class="og">
                         <p class="type-label-md">Website layout made by <a href="https://tsl.pages.dev/" target="_blank">TheShittyList</a></p>
@@ -91,7 +91,7 @@ export default {
                     <template v-if="editors">
                         <h3>List Editors</h3>
                         <ol class="editors">
-                            <li v-for="editor in editors">
+                            <li v-for="(editor, ed) in editors" :key="ed">
                                 <img :src="\`./assets/\${roleIconMap[editor.role]}\${store.dark ? '-dark' : ''}.svg\`" :alt="editor.role">
                                 <a v-if="editor.link" class="type-label-lg link" target="_blank" :href="editor.link">{{ editor.name }}</a>
                                 <p v-else>{{ editor.name }}</p>
@@ -99,30 +99,14 @@ export default {
                         </ol>
                     </template>
                     <h3>Submission Requirements</h3>
-                    <p>
-                        Achieved the record without using hacks (however, FPS bypass is allowed, up to 360fps)
-                    </p>
-                    <p>
-                        Achieved the record on the level that is listed on the site - please check the level ID before you submit a record
-                    </p>
-                    <p>
-                        Have either source audio or clicks/taps in the video. Edited audio only does not count
-                    </p>
-                    <p>
-                        The recording must have a previous attempt and entire death animation shown before the completion, unless the completion is on the first attempt. Everyplay records are exempt from this
-                    </p>
-                    <p>
-                        The recording must also show the player hit the endwall, or the completion will be invalidated.
-                    </p>
-                    <p>
-                        Do not use secret routes or bug routes
-                    </p>
-                    <p>
-                        Do not use easy modes, only a record of the unmodified level qualifies
-                    </p>
-                    <p>
-                        Once a level falls onto the Legacy List, we accept records for it for 24 hours after it falls off, then afterwards we never accept records for said level
-                    </p>
+                    <p>Achieved the record without using hacks (however, FPS bypass is allowed, up to 360fps)</p>
+                    <p>Achieved the record on the level that is listed on the site - please check the level ID before you submit a record</p>
+                    <p>Have either source audio or clicks/taps in the video. Edited audio only does not count</p>
+                    <p>The recording must have a previous attempt and entire death animation shown before the completion, unless the completion is on the first attempt. Everyplay records are exempt from this</p>
+                    <p>The recording must also show the player hit the endwall, or the completion will be invalidated.</p>
+                    <p>Do not use secret routes or bug routes</p>
+                    <p>Do not use easy modes, only a record of the unmodified level qualifies</p>
+                    <p>Once a level falls onto the Legacy List, we accept records for it for 24 hours after it falls off, then afterwards we never accept records for said level</p>
                 </div>
             </div>
         </main>
@@ -139,11 +123,12 @@ export default {
     }),
     computed: {
         level() {
-            return this.list[this.selected]?.[0];
+            return this.list?.[this.selected]?.[0] || null;
         },
         video() {
-            if (!this.level?.showcase) {
-                return embed(this.level?.verification);
+            if (!this.level) return '';
+            if (!this.level.showcase) {
+                return embed(this.level.verification);
             }
 
             return embed(
@@ -154,29 +139,31 @@ export default {
         },
     },
     async mounted() {
-        // Fetch list and editors
-        this.list = await fetchList();
-        this.editors = await fetchEditors();
+        try {
+            this.list = await fetchList();
+            this.editors = await fetchEditors();
 
-        // Error handling
-        if (!this.list) {
-            this.errors = [
-                "Failed to load list. Retry in a few minutes or notify list staff.",
-            ];
-        } else {
-            this.errors.push(
-                ...this.list
-                    .filter(([_, err]) => err)
-                    .map(([_, err]) => {
-                        return `Failed to load level. (${err}.json)`;
-                    })
-            );
-            if (!this.editors) {
-                this.errors.push("Failed to load list editors.");
+            if (!this.list) {
+                this.errors = [
+                    "Failed to load list. Retry in a few minutes or notify list staff.",
+                ];
+            } else {
+                this.errors.push(
+                    ...this.list
+                        .filter(([_, err]) => err)
+                        .map(([_, err]) => {
+                            return `Failed to load level. (${err}.json)`;
+                        })
+                );
+                if (!this.editors) {
+                    this.errors.push("Failed to load list editors.");
+                }
             }
+        } catch (err) {
+            this.errors.push("An error occurred while loading list data.");
+        } finally {
+            this.loading = false;
         }
-
-        this.loading = false;
     },
     methods: {
         embed,
