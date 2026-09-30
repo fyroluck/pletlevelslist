@@ -1,9 +1,8 @@
-import List from './pages/List.js';
-import Leaderboard from './pages/Leaderboard.js';
-import Roulette from './pages/Roulette.js';
+// CORRECT (js/pages/List.js):
+import { store } from '../main.js';
+import { embed } from '../util.js';
+import { score } from '../score.js';
+import { fetchEditors, fetchList } from '../content.js';
 
-export default [
-    { path: '/', component: List },
-    { path: '/leaderboard', component: Leaderboard },
-    { path: '/roulette', component: Roulette },
-];
+import Spinner from '../components/Spinner.js';
+import LevelAuthors from '../components/List/LevelAuthors.js';
