@@ -57,7 +57,7 @@ export default {
                     </ul>
                     <h2>Records</h2>
                     <p v-if="selected + 1 <= 75"><strong>{{ level.percentToQualify }}%</strong> or better to qualify</p>
-                    <p v-else-if="selected +1 <= 150"><strong>100%</strong> or better to qualify</p>
+                    <p v-else-if="selected + 1 <= 150"><strong>100%</strong> or better to qualify</p>
                     <p v-else>This level does not accept new records.</p>
                     <table class="records">
                         <tr v-for="record in level.records" class="record">
@@ -134,15 +134,16 @@ export default {
         selected: 0,
         errors: [],
         roleIconMap,
-        store
+        store,
+        toggledShowcase: false,
     }),
     computed: {
         level() {
-            return this.list[this.selected][0];
+            return this.list[this.selected]?.[0];
         },
         video() {
-            if (!this.level.showcase) {
-                return embed(this.level.verification);
+            if (!this.level?.showcase) {
+                return embed(this.level?.verification);
             }
 
             return embed(
@@ -153,7 +154,7 @@ export default {
         },
     },
     async mounted() {
-        // Hide loading spinner
+        // Fetch list and editors
         this.list = await fetchList();
         this.editors = await fetchEditors();
 
