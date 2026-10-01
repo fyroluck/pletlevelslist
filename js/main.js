@@ -1,10 +1,6 @@
 import routes from './routes.js';
 import { fetchList } from './content.js';
-
-const SUPABASE_URL = 'https://pklwtxcadoetlpeubstb.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBrbHd0eGNhZG9ldGxwZXVic3RiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA4NjUyNTQsImV4cCI6MjEwNjQ0MTI1NH0.z2_d4pJ2Qf9qO3B2jhWf7Z-C7TwxAz_CajozBh7Y_ZI';
-
-const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+import { supabase } from './supabase.js';
 
 export const store = Vue.reactive({
     dark: JSON.parse(localStorage.getItem('dark')) || false,
@@ -42,16 +38,15 @@ const app = Vue.createApp({
         }
     },
     async mounted() {
-        const { data: { session } } = await supabaseClient.auth.getSession();
+        const { data: { session } } = await supabase.auth.getSession();
         if (session) {
             this.store.user = session.user;
         }
 
-        supabaseClient.auth.onAuthStateChange((_event, session) => {
+        supabase.auth.onAuthStateChange((_event, session) => {
             this.store.user = session ? session.user : null;
         });
 
-        // Load level names for dropdown menu
         try {
             const rawList = await fetchList();
             if (rawList) {
@@ -74,7 +69,7 @@ const app = Vue.createApp({
             this.showDropdown = false;
         },
         async loginWithDiscord() {
-            const { error } = await supabaseClient.auth.signInWithOAuth({
+            const { error } = await supabase.auth.signInWithOAuth({
                 provider: 'discord',
                 options: {
                     redirectTo: 'https://fyroluck.github.io/pletlevelslist/',
@@ -84,7 +79,7 @@ const app = Vue.createApp({
             if (error) console.error('Login error:', error.message);
         },
         async logout() {
-            await supabaseClient.auth.signOut();
+            await supabase.auth.signOut();
             this.store.user = null;
             this.showSubmitModal = false;
             sessionStorage.removeItem('is_admin_verified');
@@ -96,7 +91,7 @@ const app = Vue.createApp({
             const user = this.store.user;
             const userName = user.user_metadata.full_name || user.user_metadata.name || user.user_metadata.custom_claims?.global_name;
 
-            const { error } = await supabaseClient
+            const { error } = await supabase
                 .from('records')
                 .insert([
                     {
