@@ -14,6 +14,13 @@
             "percent": 100,
             "hz": 60,
             "mobile": false
+        },
+        { 
+            "user": "Voxshi",
+            "link": "https://www.youtube.com/watch?v=tt2YuHQr174",
+            "percent": 100,
+            "hz": 0,
+            "mobile": false
         }
     ]
 }
