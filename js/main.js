@@ -53,13 +53,14 @@ const app = Vue.createApp({
         async logout() {
             await supabaseClient.auth.signOut();
             this.store.user = null;
+            this.showSubmitModal = false;
         },
         async submitRecord() {
             this.submitting = true;
             this.submitMessage = '';
 
             const user = this.store.user;
-            const userName = user.user_metadata.full_name || user.user_metadata.name;
+            const userName = user.user_metadata.full_name || user.user_metadata.name || user.user_metadata.custom_claims?.global_name;
 
             const { error } = await supabaseClient
                 .from('records')
