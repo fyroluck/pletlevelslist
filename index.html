@@ -5,7 +5,6 @@
         <meta name="viewport" content="width=1024" />
         <title>PletLevelsList</title>
 
-        <!-- Replace your server icon by uploading an image file named "list_icon.png"-->
         <link rel="icon" href="./list_icon.png" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -54,61 +53,77 @@
                     <span class="type-label-lg">Roulette</span>
                 </router-link>
                 <div class="nav__actions">
-                    <!-- Dark/Light Theme Toggle -->
-                    <button
-                        class="nav__icon"
-                        @click.prevent="store.toggleDark()"
-                    >
-                        <img
-                            :src="store.dark ? './assets/light.svg' : './assets/dark.svg'"
-                            alt="Toggle Theme"
-                        />
+                    <button class="nav__icon" @click.prevent="store.toggleDark()">
+                        <img :src="store.dark ? './assets/light.svg' : './assets/dark.svg'" alt="" />
                     </button>
 
-                    <!-- Discord Server Link -->
                     <a class="nav__icon" href="https://discord.gg/kFJsSAupCp" target="_blank">
                         <img src="./assets/discord.svg" alt="Discord Logo" />
                     </a>
 
-                    <!-- Profile Info (Shows when logged in) -->
+                    <!-- Profile Avatar & Logout Button -->
                     <div v-if="store.user" style="display: flex; align-items: center; gap: 10px;">
                         <img 
                             :src="store.user.user_metadata.avatar_url" 
                             alt="Avatar" 
-                            style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover;" 
+                            style="width: 32px; height: 32px; border-radius: 50%;" 
                         />
-                        <span class="type-label-lg" style="color: white;">
-                            {{ store.user.user_metadata.full_name || store.user.user_metadata.name }}
-                        </span>
-                        <button 
-                            class="nav__cta type-label-lg" 
-                            @click="logout"
-                            style="cursor: pointer; border: none; outline: none; background: #e74c3c;"
-                        >
+                        <button class="nav__cta type-label-lg" @click="logout" style="background: #e74c3c; border: none; cursor: pointer;">
                             Logout
                         </button>
                     </div>
 
-                    <!-- Login Button (Shows when logged out) -->
-                    <button
-                        v-else
-                        class="nav__cta type-label-lg"
-                        @click="loginWithDiscord"
-                        style="cursor: pointer; border: none; outline: none;"
-                    >
+                    <!-- Discord Login Button -->
+                    <button v-else class="nav__cta type-label-lg" @click="loginWithDiscord" style="border: none; cursor: pointer;">
                         Login with Discord
                     </button>
 
-                    <!-- Submit Record Link -->
-                    <a
-                        class="nav__cta type-label-lg"
-                        href="#"
-                        target="_blank"
-                        >Submit Record</a
-                    >
+                    <!-- Submit Record Modal Trigger -->
+                    <button class="nav__cta type-label-lg" @click="showSubmitModal = true" style="border: none; cursor: pointer;">
+                        Submit Record
+                    </button>
                 </div>
             </nav>
         </header>
+
+        <!-- Record Submission Modal -->
+        <div v-if="showSubmitModal" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.7); display: flex; justify-content: center; align-items: center; z-index: 1000;" @click.self="showSubmitModal = false">
+            <div style="background: #1e1e1e; padding: 30px; border-radius: 12px; width: 400px; color: #fff;">
+                <h3 style="margin-bottom: 20px;">Submit Level Record</h3>
+                
+                <div v-if="!store.user">
+                    <p style="margin-bottom: 15px;">You must be logged in with Discord to submit a record.</p>
+                    <button class="nav__cta type-label-lg" @click="loginWithDiscord" style="border: none; cursor: pointer;">
+                        Login with Discord
+                    </button>
+                </div>
+
+                <form v-else @submit.prevent="submitRecord" style="display: flex; flex-direction: column; gap: 12px;">
+                    <label>Level Name:</label>
+                    <input v-model="form.level_name" required type="text" placeholder="e.g. Bloodlust" style="padding: 8px; border-radius: 4px; border: 1px solid #444; background: #2a2a2a; color: #fff;" />
+
+                    <label>Refresh Rate (Hz):</label>
+                    <input v-model.number="form.hz" required type="number" min="1" placeholder="240" style="padding: 8px; border-radius: 4px; border: 1px solid #444; background: #2a2a2a; color: #fff;" />
+
+                    <label>Percentage (%):</label>
+                    <input v-model.number="form.percentage" required type="number" min="1" max="100" placeholder="100" style="padding: 8px; border-radius: 4px; border: 1px solid #444; background: #2a2a2a; color: #fff;" />
+
+                    <label>YouTube Link:</label>
+                    <input v-model="form.video_url" required type="url" placeholder="https://youtube.com/watch?v=..." style="padding: 8px; border-radius: 4px; border: 1px solid #444; background: #2a2a2a; color: #fff;" />
+
+                    <div style="display: flex; gap: 10px; margin-top: 15px;">
+                        <button type="submit" class="nav__cta type-label-lg" :disabled="submitting" style="border: none; cursor: pointer;">
+                            {{ submitting ? 'Submitting...' : 'Submit' }}
+                        </button>
+                        <button type="button" class="nav__cta type-label-lg" @click="showSubmitModal = false" style="background: #555; border: none; cursor: pointer;">
+                            Cancel
+                        </button>
+                    </div>
+                    <p v-if="submitMessage" style="margin-top: 10px; font-size: 14px; color: #4caf50;">{{ submitMessage }}</p>
+                </form>
+            </div>
+        </div>
+
         <router-view :class="{ dark: store.dark }"></router-view>
     </body>
 </html>
