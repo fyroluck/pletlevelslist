@@ -54,28 +54,52 @@
                     <span class="type-label-lg">Roulette</span>
                 </router-link>
                 <div class="nav__actions">
+                    <!-- Dark/Light Theme Toggle -->
                     <button
                         class="nav__icon"
                         @click.prevent="store.toggleDark()"
                     >
                         <img
                             :src="store.dark ? './assets/light.svg' : './assets/dark.svg'"
-                            alt=""
+                            alt="Toggle Theme"
                         />
                     </button>
-                    <!-- Replace the '#' with your discord server's invite-->
+
+                    <!-- Discord Server Link -->
                     <a class="nav__icon" href="https://discord.gg/kFJsSAupCp" target="_blank">
                         <img src="./assets/discord.svg" alt="Discord Logo" />
                     </a>
-                    <!-- Discord Login Button -->
+
+                    <!-- Profile Info (Shows when logged in) -->
+                    <div v-if="store.user" style="display: flex; align-items: center; gap: 10px;">
+                        <img 
+                            :src="store.user.user_metadata.avatar_url" 
+                            alt="Avatar" 
+                            style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover;" 
+                        />
+                        <span class="type-label-lg" style="color: white;">
+                            {{ store.user.user_metadata.full_name || store.user.user_metadata.name }}
+                        </span>
+                        <button 
+                            class="nav__cta type-label-lg" 
+                            @click="logout"
+                            style="cursor: pointer; border: none; outline: none; background: #e74c3c;"
+                        >
+                            Logout
+                        </button>
+                    </div>
+
+                    <!-- Login Button (Shows when logged out) -->
                     <button
+                        v-else
                         class="nav__cta type-label-lg"
                         @click="loginWithDiscord"
                         style="cursor: pointer; border: none; outline: none;"
                     >
                         Login with Discord
                     </button>
-                    <!-- List record submission form -->
+
+                    <!-- Submit Record Link -->
                     <a
                         class="nav__cta type-label-lg"
                         href="#"
