@@ -2,6 +2,7 @@ import { store } from "../main.js";
 import { embed } from "../util.js";
 import { score } from "../score.js";
 import { fetchEditors, fetchList } from "../content.js";
+import { supabase } from "../supabase.js";
 
 import Spinner from "../components/Spinner.js";
 import LevelAuthors from "../components/List/LevelAuthors.js";
@@ -138,15 +139,13 @@ export default {
                     : this.level.verification
             );
         },
-        // Combines JSON level records with approved Supabase submissions
         combinedRecords() {
             if (!this.level) return [];
             
             const staticRecords = this.level.records || [];
             
-            // Map Supabase records to match your layout's expected format
             const approvedSubmissions = this.supabaseRecords
-                .filter(r => r.level_name.trim().toLowerCase() === this.level.name.trim().toLowerCase())
+                .filter(r => r.level_name && r.level_name.trim().toLowerCase() === this.level.name.trim().toLowerCase())
                 .map(r => ({
                     user: r.user_name,
                     percent: r.percentage,
@@ -191,11 +190,7 @@ export default {
         score,
         async fetchApprovedSupabaseRecords() {
             try {
-                const SUPABASE_URL = 'https://pklwtxcadoetlpeubstb.supabase.co';
-                const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBrbHd0eGNhZG9ldGxwZXVic3RiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA4NjUyNTQsImV4cCI6MjEwNjQ0MTI1NH0.z2_d4pJ2Qf9qO3B2jhWf7Z-C7TwxAz_CajozBh7Y_ZI';
-                const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-                const { data, error } = await supabaseClient
+                const { data, error } = await supabase
                     .from('records')
                     .select('*')
                     .eq('status', 'approved');
