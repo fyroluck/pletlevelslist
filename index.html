@@ -16,19 +16,12 @@
         <link rel="stylesheet" type="text/css" href="./css/typography.css" />
         <link rel="stylesheet" type="text/css" href="./css/main.css" />
         <link rel="stylesheet" type="text/css" href="./css/pages/list.css" />
-        <link
-            rel="stylesheet"
-            type="text/css"
-            href="./css/pages/leaderboard.css"
-        />
+        <link rel="stylesheet" type="text/css" href="./css/pages/leaderboard.css" />
         <link rel="stylesheet" type="text/css" href="./css/pages/roulette.css" />
         <link rel="stylesheet" type="text/css" href="./css/components/nav.css" />
         <link rel="stylesheet" type="text/css" href="./css/components/btn.css" />
-        <link
-            rel="stylesheet"
-            type="text/css"
-            href="./css/components/tabs.css"
-        />
+        <link rel="stylesheet" type="text/css" href="./css/components/tabs.css" />
+
         <!-- Supabase Client Library -->
         <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
         
@@ -52,18 +45,20 @@
                 <router-link class="nav__tab" to="/roulette">
                     <span class="type-label-lg">Roulette</span>
                 </router-link>
+                
+                <router-link class="nav__tab" to="/admin">
+                    <span class="type-label-lg">Admin</span>
+                </router-link>
+
                 <div class="nav__actions">
-                    <!-- Dark Mode Toggle -->
                     <button class="nav__icon" @click.prevent="store.toggleDark()">
                         <img :src="store.dark ? './assets/light.svg' : './assets/dark.svg'" alt="Toggle Theme" />
                     </button>
 
-                    <!-- Discord Server Link -->
                     <a class="nav__icon" href="https://discord.gg/kFJsSAupCp" target="_blank">
                         <img src="./assets/discord.svg" alt="Discord Logo" />
                     </a>
 
-                    <!-- Show when LOGGED IN -->
                     <template v-if="store.user">
                         <div style="display: flex; align-items: center; gap: 10px;">
                             <img 
@@ -77,14 +72,13 @@
                         </div>
                         <button 
                             class="nav__cta type-label-lg" 
-                            @click="showSubmitModal = true" 
+                            @click="openModal" 
                             style="border: none; cursor: pointer;"
                         >
                             Submit Record
                         </button>
                     </template>
 
-                    <!-- Show when LOGGED OUT -->
                     <button v-else class="nav__cta type-label-lg" @click="loginWithDiscord" style="border: none; cursor: pointer;">
                         Login with Discord
                     </button>
@@ -98,12 +92,41 @@
             style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.7); display: flex; justify-content: center; align-items: center; z-index: 1000;" 
             @click.self="showSubmitModal = false"
         >
-            <div style="background: #1e1e1e; padding: 30px; border-radius: 12px; width: 400px; color: #fff;">
+            <div style="background: #1e1e1e; padding: 30px; border-radius: 12px; width: 400px; color: #fff; overflow: visible;">
                 <h3 style="margin-bottom: 20px; font-size: 20px; font-weight: bold;">Submit Level Record</h3>
 
                 <form @submit.prevent="submitRecord" style="display: flex; flex-direction: column; gap: 12px;">
                     <label>Level Name:</label>
-                    <input v-model="form.level_name" required type="text" placeholder="e.g. Bloodlust" style="padding: 8px; border-radius: 4px; border: 1px solid #444; background: #2a2a2a; color: #fff;" />
+                    
+                    <!-- Searchable Scrollable Level Dropdown -->
+                    <div style="position: relative;">
+                        <input 
+                            v-model="levelSearch" 
+                            @focus="showDropdown = true" 
+                            @input="showDropdown = true; form.level_name = levelSearch" 
+                            required 
+                            type="text" 
+                            placeholder="Click or type to search levels..." 
+                            style="padding: 8px; border-radius: 4px; border: 1px solid #444; background: #2a2a2a; color: #fff; width: 100%; box-sizing: border-box;" 
+                        />
+                        
+                        <!-- Scrollable list popup -->
+                        <div 
+                            v-if="showDropdown && filteredLevels.length > 0" 
+                            style="position: absolute; top: 100%; left: 0; right: 0; max-height: 180px; overflow-y: auto; background: #2a2a2a; border: 1px solid #444; border-radius: 4px; margin-top: 4px; z-index: 1010;"
+                        >
+                            <div 
+                                v-for="lvlName in filteredLevels" 
+                                :key="lvlName" 
+                                @click="selectLevel(lvlName)" 
+                                style="padding: 8px 12px; cursor: pointer; border-bottom: 1px solid #333;"
+                                onmouseover="this.style.background='#383838'" 
+                                onmouseout="this.style.background='#2a2a2a'"
+                            >
+                                {{ lvlName }}
+                            </div>
+                        </div>
+                    </div>
 
                     <label>Refresh Rate (Hz):</label>
                     <input v-model.number="form.hz" required type="number" min="1" placeholder="240" style="padding: 8px; border-radius: 4px; border: 1px solid #444; background: #2a2a2a; color: #fff;" />
