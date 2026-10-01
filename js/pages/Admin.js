@@ -1,4 +1,5 @@
 import { store } from '../main.js';
+import { supabase } from '../supabase.js';
 
 export default {
     template: `
@@ -81,7 +82,6 @@ export default {
     },
     methods: {
         async checkAdminRole() {
-            // Use cached authorization if already validated in this browser session
             if (sessionStorage.getItem('is_admin_verified') === 'true') {
                 this.isAdmin = true;
                 return;
@@ -90,11 +90,7 @@ export default {
             const GUILD_ID = '1531527778690924644';
             const ADMIN_ROLE_ID = '1555287625760510083';
 
-            const SUPABASE_URL = 'https://pklwtxcadoetlpeubstb.supabase.co';
-            const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBrbHd0eGNhZG9ldGxwZXVic3RiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA4NjUyNTQsImV4cCI6MjEwNjQ0MTI1NH0.z2_d4pJ2Qf9qO3B2jhWf7Z-C7TwxAz_CajozBh7Y_ZI';
-            const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-            const { data: { session } } = await supabaseClient.auth.getSession();
+            const { data: { session } } = await supabase.auth.getSession();
             
             if (!session || !session.provider_token) {
                 this.isAdmin = false;
@@ -124,11 +120,8 @@ export default {
         },
         async fetchPendingRecords() {
             this.fetchingRecords = true;
-            const SUPABASE_URL = 'https://pklwtxcadoetlpeubstb.supabase.co';
-            const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBrbHd0eGNhZG9ldGxwZXVic3RiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA4NjUyNTQsImV4cCI6MjEwNjQ0MTI1NH0.z2_d4pJ2Qf9qO3B2jhWf7Z-C7TwxAz_CajozBh7Y_ZI';
-            const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-            const { data, error } = await supabaseClient
+            const { data, error } = await supabase
                 .from('records')
                 .select('*')
                 .eq('status', 'pending')
@@ -140,11 +133,7 @@ export default {
             this.fetchingRecords = false;
         },
         async updateStatus(id, newStatus) {
-            const SUPABASE_URL = 'https://pklwtxcadoetlpeubstb.supabase.co';
-            const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBrbHd0eGNhZG9ldGxwZXVic3RiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA4NjUyNTQsImV4cCI6MjEwNjQ0MTI1NH0.z2_d4pJ2Qf9qO3B2jhWf7Z-C7TwxAz_CajozBh7Y_ZI';
-            const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-            const { error } = await supabaseClient
+            const { error } = await supabase
                 .from('records')
                 .update({ status: newStatus })
                 .eq('id', id);
@@ -152,7 +141,6 @@ export default {
             if (error) {
                 alert('Failed to update record status: ' + error.message);
             } else {
-                // Remove from local array instantly
                 this.pendingRecords = this.pendingRecords.filter(r => r.id !== id);
             }
         }
