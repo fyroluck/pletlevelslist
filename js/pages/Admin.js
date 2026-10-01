@@ -12,7 +12,7 @@ export default {
             <div v-else-if="!isAdmin" style="background: #e74c3c22; border: 1px solid #e74c3c; padding: 20px; border-radius: 8px;">
                 <h3 style="color: #e74c3c; font-weight: bold;">Access Denied</h3>
                 <p style="margin-top: 8px; color: #ddd;">
-                    You do not have the required Discord Admin role to view this page.
+                    You do not have the required Discord Admin role to view this page, or your session has expired. Try logging out and logging back in with Discord.
                 </p>
             </div>
 
@@ -81,6 +81,12 @@ export default {
     },
     methods: {
         async checkAdminRole() {
+            // Use cached authorization if already validated in this browser session
+            if (sessionStorage.getItem('is_admin_verified') === 'true') {
+                this.isAdmin = true;
+                return;
+            }
+
             const GUILD_ID = '1531527778690924644';
             const ADMIN_ROLE_ID = '1555287625760510083';
 
@@ -106,7 +112,11 @@ export default {
                 }
 
                 const member = await res.json();
-                this.isAdmin = member.roles && member.roles.includes(ADMIN_ROLE_ID);
+                this.isAdmin = Array.isArray(member.roles) && member.roles.includes(ADMIN_ROLE_ID);
+
+                if (this.isAdmin) {
+                    sessionStorage.setItem('is_admin_verified', 'true');
+                }
             } catch (err) {
                 console.error('Failed to verify admin status:', err);
                 this.isAdmin = false;
@@ -124,25 +134,26 @@ export default {
                 .eq('status', 'pending')
                 .order('created_at', { ascending: true });
 
-            if (!error) {
+            if (!error && data) {
                 this.pendingRecords = data;
             }
             this.fetchingRecords = false;
         },
-        async updateStatus(id, status) {
+        async updateStatus(id, newStatus) {
             const SUPABASE_URL = 'https://pklwtxcadoetlpeubstb.supabase.co';
             const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBrbHd0eGNhZG9ldGxwZXVic3RiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA4NjUyNTQsImV4cCI6MjEwNjQ0MTI1NH0.z2_d4pJ2Qf9qO3B2jhWf7Z-C7TwxAz_CajozBh7Y_ZI';
             const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
             const { error } = await supabaseClient
                 .from('records')
-                .update({ status })
+                .update({ status: newStatus })
                 .eq('id', id);
 
-            if (!error) {
-                this.pendingRecords = this.pendingRecords.filter(r => r.id !== id);
+            if (error) {
+                alert('Failed to update record status: ' + error.message);
             } else {
-                alert('Failed to update record: ' + error.message);
+                // Remove from local array instantly
+                this.pendingRecords = this.pendingRecords.filter(r => r.id !== id);
             }
         }
     }
