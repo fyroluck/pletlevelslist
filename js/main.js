@@ -35,7 +35,7 @@ const app = Vue.createApp({
             const { error } = await supabaseClient.auth.signInWithOAuth({
                 provider: 'discord',
                 options: {
-                    redirectTo: window.location.origin
+                    redirectTo: 'https://fyroluck.github.io/pletlevelslist/'
                 }
             });
             if (error) {
