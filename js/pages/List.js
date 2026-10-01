@@ -60,7 +60,7 @@ export default {
                     <p v-else-if="selected + 1 <= 150"><strong>100%</strong> or better to qualify</p>
                     <p v-else>This level does not accept new records.</p>
                     <table class="records">
-                        <tr v-for="(record, r) in level.records" :key="r" class="record">
+                        <tr v-for="(record, r) in combinedRecords" :key="r" class="record">
                             <td class="percent">
                                 <p>{{ record.percent }}%</p>
                             </td>
@@ -114,6 +114,7 @@ export default {
     data: () => ({
         list: [],
         editors: [],
+        supabaseRecords: [],
         loading: true,
         selected: 0,
         errors: [],
@@ -137,11 +138,31 @@ export default {
                     : this.level.verification
             );
         },
+        // Combines JSON level records with approved Supabase submissions
+        combinedRecords() {
+            if (!this.level) return [];
+            
+            const staticRecords = this.level.records || [];
+            
+            // Map Supabase records to match your layout's expected format
+            const approvedSubmissions = this.supabaseRecords
+                .filter(r => r.level_name.trim().toLowerCase() === this.level.name.trim().toLowerCase())
+                .map(r => ({
+                    user: r.user_name,
+                    percent: r.percentage,
+                    hz: r.hz,
+                    link: r.video_url,
+                    mobile: false
+                }));
+
+            return [...staticRecords, ...approvedSubmissions];
+        }
     },
     async mounted() {
         try {
             this.list = await fetchList();
             this.editors = await fetchEditors();
+            await this.fetchApprovedSupabaseRecords();
 
             if (!this.list) {
                 this.errors = [
@@ -168,5 +189,23 @@ export default {
     methods: {
         embed,
         score,
+        async fetchApprovedSupabaseRecords() {
+            try {
+                const SUPABASE_URL = 'https://pklwtxcadoetlpeubstb.supabase.co';
+                const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBrbHd0eGNhZG9ldGxwZXVic3RiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA4NjUyNTQsImV4cCI6MjEwNjQ0MTI1NH0.z2_d4pJ2Qf9qO3B2jhWf7Z-C7TwxAz_CajozBh7Y_ZI';
+                const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+                const { data, error } = await supabaseClient
+                    .from('records')
+                    .select('*')
+                    .eq('status', 'approved');
+
+                if (!error && data) {
+                    this.supabaseRecords = data;
+                }
+            } catch (err) {
+                console.error("Failed to load Supabase records:", err);
+            }
+        }
     },
 };
