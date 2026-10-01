@@ -53,41 +53,40 @@
                     <span class="type-label-lg">Roulette</span>
                 </router-link>
                 <div class="nav__actions">
-                    <!-- Theme Toggle -->
+                    <!-- Dark Mode Toggle -->
                     <button class="nav__icon" @click.prevent="store.toggleDark()">
                         <img :src="store.dark ? './assets/light.svg' : './assets/dark.svg'" alt="Toggle Theme" />
                     </button>
 
-                    <!-- Discord Server Invite -->
+                    <!-- Discord Server Link -->
                     <a class="nav__icon" href="https://discord.gg/kFJsSAupCp" target="_blank">
                         <img src="./assets/discord.svg" alt="Discord Logo" />
                     </a>
 
-                    <!-- Profile Avatar & Logout (Shown when LOGGED IN) -->
-                    <div v-if="store.user" style="display: flex; align-items: center; gap: 10px;">
-                        <img 
-                            :src="store.user.user_metadata.avatar_url" 
-                            alt="Avatar" 
-                            style="width: 32px; height: 32px; border-radius: 50%;" 
-                        />
-                        <button class="nav__cta type-label-lg" @click="logout" style="background: #e74c3c; border: none; cursor: pointer;">
-                            Logout
+                    <!-- Show when LOGGED IN -->
+                    <template v-if="store.user">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <img 
+                                :src="store.user.user_metadata.avatar_url" 
+                                alt="Avatar" 
+                                style="width: 32px; height: 32px; border-radius: 50%;" 
+                            />
+                            <button class="nav__cta type-label-lg" @click="logout" style="background: #e74c3c; border: none; cursor: pointer;">
+                                Logout
+                            </button>
+                        </div>
+                        <button 
+                            class="nav__cta type-label-lg" 
+                            @click="showSubmitModal = true" 
+                            style="border: none; cursor: pointer;"
+                        >
+                            Submit Record
                         </button>
-                    </div>
+                    </template>
 
-                    <!-- Discord Login Button (Shown when LOGGED OUT) -->
+                    <!-- Show when LOGGED OUT -->
                     <button v-else class="nav__cta type-label-lg" @click="loginWithDiscord" style="border: none; cursor: pointer;">
                         Login with Discord
-                    </button>
-
-                    <!-- Submit Record Button (ONLY SHOWN WHEN LOGGED IN) -->
-                    <button 
-                        v-if="store.user" 
-                        class="nav__cta type-label-lg" 
-                        @click="showSubmitModal = true" 
-                        style="border: none; cursor: pointer;"
-                    >
-                        Submit Record
                     </button>
                 </div>
             </nav>
@@ -117,7 +116,8 @@
 
                     <div style="display: flex; gap: 10px; margin-top: 15px;">
                         <button type="submit" class="nav__cta type-label-lg" :disabled="submitting" style="border: none; cursor: pointer;">
-                            {{ submitting ? 'Submitting...' : 'Submit' }}
+                            <span v-if="submitting">Submitting...</span>
+                            <span v-else>Submit</span>
                         </button>
                         <button type="button" class="nav__cta type-label-lg" @click="showSubmitModal = false" style="background: #555; border: none; cursor: pointer;">
                             Cancel
