@@ -1,4 +1,5 @@
 import routes from './routes.js';
+import { fetchList } from './content.js';
 
 const SUPABASE_URL = 'https://pklwtxcadoetlpeubstb.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBrbHd0eGNhZG9ldGxwZXVic3RiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA4NjUyNTQsImV4cCI6MjEwNjQ0MTI1NH0.z2_d4pJ2Qf9qO3B2jhWf7Z-C7TwxAz_CajozBh7Y_ZI';
@@ -21,6 +22,9 @@ const app = Vue.createApp({
             showSubmitModal: false,
             submitting: false,
             submitMessage: '',
+            levelListNames: [],
+            levelSearch: '',
+            showDropdown: false,
             form: {
                 level_name: '',
                 hz: 240,
@@ -28,6 +32,14 @@ const app = Vue.createApp({
                 video_url: ''
             }
         };
+    },
+    computed: {
+        filteredLevels() {
+            if (!this.levelSearch) return this.levelListNames;
+            return this.levelListNames.filter(name => 
+                name.toLowerCase().includes(this.levelSearch.toLowerCase())
+            );
+        }
     },
     async mounted() {
         const { data: { session } } = await supabaseClient.auth.getSession();
@@ -38,8 +50,29 @@ const app = Vue.createApp({
         supabaseClient.auth.onAuthStateChange((_event, session) => {
             this.store.user = session ? session.user : null;
         });
+
+        // Load level names for dropdown menu
+        try {
+            const rawList = await fetchList();
+            if (rawList) {
+                this.levelListNames = rawList
+                    .filter(([lvl]) => lvl && lvl.name)
+                    .map(([lvl]) => lvl.name);
+            }
+        } catch (e) {
+            console.error('Failed to pre-load level dropdown list', e);
+        }
     },
     methods: {
+        openModal() {
+            this.showSubmitModal = true;
+            this.showDropdown = false;
+        },
+        selectLevel(name) {
+            this.form.level_name = name;
+            this.levelSearch = name;
+            this.showDropdown = false;
+        },
         async loginWithDiscord() {
             const { error } = await supabaseClient.auth.signInWithOAuth({
                 provider: 'discord',
@@ -54,6 +87,7 @@ const app = Vue.createApp({
             await supabaseClient.auth.signOut();
             this.store.user = null;
             this.showSubmitModal = false;
+            sessionStorage.removeItem('is_admin_verified');
         },
         async submitRecord() {
             this.submitting = true;
@@ -83,6 +117,7 @@ const app = Vue.createApp({
             } else {
                 this.submitMessage = 'Record submitted successfully!';
                 this.form = { level_name: '', hz: 240, percentage: 100, video_url: '' };
+                this.levelSearch = '';
                 setTimeout(() => {
                     this.showSubmitModal = false;
                     this.submitMessage = '';
